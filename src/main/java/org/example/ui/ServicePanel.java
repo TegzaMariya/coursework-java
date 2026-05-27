@@ -9,6 +9,7 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 
 public class ServicePanel extends JPanel {
+
     private final DataStore store;
 
     private final JTable table;
@@ -18,20 +19,40 @@ public class ServicePanel extends JPanel {
 
     public ServicePanel() {
         store = DataStore.getInstance();
-        setLayout(new BorderLayout(10, 10));
 
-        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        searchField = new JTextField(25);
-        JButton searchButton = new JButton("Пошук");
-        JButton refreshButton = new JButton("Оновити");
+        setLayout(new BorderLayout(25, 25));
+        setBackground(UiTheme.BG);
+        setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
 
-        topPanel.add(new JLabel("Пошук послуг:"));
-        topPanel.add(searchField);
-        topPanel.add(searchButton);
-        topPanel.add(refreshButton);
+        JPanel header = new JPanel(new BorderLayout(20, 20));
+        header.setOpaque(false);
+
+        JPanel titleBox = new JPanel(new GridLayout(2, 1));
+        titleBox.setOpaque(false);
+        titleBox.add(UiTheme.title("Послуги"));
+        titleBox.add(UiTheme.subtitle("Каталог державних послуг з описом, документами, термінами та вартістю"));
+
+        JPanel filters = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 0));
+        filters.setOpaque(false);
+
+        searchField = UiTheme.textField();
+        searchField.setPreferredSize(new Dimension(300, 42));
+
+        JButton searchButton = UiTheme.primaryButton("Пошук");
+        JButton refreshButton = UiTheme.secondaryButton("Оновити");
+
+        filters.add(searchField);
+        filters.add(searchButton);
+        filters.add(refreshButton);
+
+        header.add(titleBox, BorderLayout.WEST);
+        header.add(filters, BorderLayout.EAST);
+
+        add(header, BorderLayout.NORTH);
 
         tableModel = new DefaultTableModel(
-                new Object[]{"ID", "Назва послуги", "Установа", "Термін", "Вартість"}, 0) {
+                new Object[]{"ID", "Назва послуги", "Установа", "Термін", "Вартість"}, 0
+        ) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
@@ -40,20 +61,23 @@ public class ServicePanel extends JPanel {
 
         table = new JTable(tableModel);
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        UiTheme.styleTable(table);
 
-        detailsArea = new JTextArea();
+        detailsArea = UiTheme.textArea(8);
         detailsArea.setEditable(false);
-        detailsArea.setLineWrap(true);
-        detailsArea.setWrapStyleWord(true);
+        detailsArea.setForeground(UiTheme.TEXT);
+        detailsArea.setBackground(UiTheme.CARD);
 
         JSplitPane splitPane = new JSplitPane(
                 JSplitPane.VERTICAL_SPLIT,
-                new JScrollPane(table),
-                new JScrollPane(detailsArea)
+                UiTheme.scroll(table),
+                UiTheme.scroll(detailsArea)
         );
-        splitPane.setDividerLocation(280);
 
-        add(topPanel, BorderLayout.NORTH);
+        splitPane.setDividerLocation(430);
+        splitPane.setBorder(BorderFactory.createEmptyBorder());
+        splitPane.setResizeWeight(0.72);
+
         add(splitPane, BorderLayout.CENTER);
 
         searchButton.addActionListener(e -> loadServices());
@@ -74,6 +98,7 @@ public class ServicePanel extends JPanel {
 
     private void loadServices() {
         tableModel.setRowCount(0);
+
         String keyword = searchField.getText().trim().toLowerCase();
 
         for (GovService service : store.getServices()) {
@@ -97,16 +122,20 @@ public class ServicePanel extends JPanel {
             }
         }
 
-        detailsArea.setText("");
+        detailsArea.setText("Оберіть послугу в таблиці, щоб переглянути детальну інформацію.");
     }
 
     private void showSelectedService() {
         int row = table.getSelectedRow();
-        if (row == -1) return;
+
+        if (row == -1) {
+            return;
+        }
 
         int id = Integer.parseInt(tableModel.getValueAt(row, 0).toString());
 
         GovService found = null;
+
         for (GovService service : store.getServices()) {
             if (service.getId() == id) {
                 found = service;
@@ -114,16 +143,20 @@ public class ServicePanel extends JPanel {
             }
         }
 
-        if (found == null) return;
+        if (found == null) {
+            return;
+        }
 
         Institution institution = store.findInstitutionById(found.getInstitutionId());
         String institutionName = institution != null ? institution.getName() : "Невідома установа";
 
         StringBuilder sb = new StringBuilder();
+
         sb.append("Назва послуги: ").append(found.getName()).append("\n");
         sb.append("Установа: ").append(institutionName).append("\n");
         sb.append("Термін виконання: ").append(found.getExecutionTime()).append("\n");
         sb.append("Вартість: ").append(found.getCost()).append("\n\n");
+
         sb.append("Опис:\n").append(found.getDescription()).append("\n\n");
         sb.append("Необхідні документи:\n").append(found.getDocumentsRequired()).append("\n\n");
         sb.append("Примітки:\n").append(found.getNotes()).append("\n");

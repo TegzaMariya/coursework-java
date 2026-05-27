@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 public class InstitutionPanel extends JPanel {
+
     private final DataStore store;
 
     private final JTable table;
@@ -22,24 +23,47 @@ public class InstitutionPanel extends JPanel {
 
     public InstitutionPanel() {
         store = DataStore.getInstance();
-        setLayout(new BorderLayout(10, 10));
 
-        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        setLayout(new BorderLayout(25, 25));
+        setBackground(UiTheme.BG);
+        setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
 
-        searchField = new JTextField(20);
+        JPanel header = new JPanel(new BorderLayout(20, 20));
+        header.setOpaque(false);
+
+        JPanel titleBox = new JPanel(new GridLayout(2, 1));
+        titleBox.setOpaque(false);
+        titleBox.add(UiTheme.title("Установи"));
+        titleBox.add(UiTheme.subtitle("Перегляд, пошук та фільтрація державних установ міста Ужгород"));
+
+        JPanel filters = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 0));
+        filters.setOpaque(false);
+
+        searchField = UiTheme.textField();
+        searchField.setPreferredSize(new Dimension(270, 42));
+
         categoryCombo = new JComboBox<>();
-        JButton searchButton = new JButton("Пошук");
-        JButton refreshButton = new JButton("Оновити");
+        categoryCombo.setPreferredSize(new Dimension(180, 42));
 
-        topPanel.add(new JLabel("Ключове слово:"));
-        topPanel.add(searchField);
-        topPanel.add(new JLabel("Категорія:"));
-        topPanel.add(categoryCombo);
-        topPanel.add(searchButton);
-        topPanel.add(refreshButton);
+        JButton searchButton = UiTheme.primaryButton("Пошук");
+        JButton refreshButton = UiTheme.secondaryButton("Оновити");
+
+        filters.add(searchField);
+        filters.add(categoryCombo);
+        filters.add(searchButton);
+        filters.add(refreshButton);
+
+        header.add(titleBox, BorderLayout.WEST);
+        header.add(filters, BorderLayout.EAST);
+
+        add(header, BorderLayout.NORTH);
+
+        JPanel center = new JPanel(new BorderLayout(20, 20));
+        center.setOpaque(false);
 
         tableModel = new DefaultTableModel(
-                new Object[]{"ID", "Назва", "Категорія", "Адреса", "Телефон"}, 0) {
+                new Object[]{"ID", "Назва", "Категорія", "Адреса", "Телефон"}, 0
+        ) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
@@ -48,21 +72,26 @@ public class InstitutionPanel extends JPanel {
 
         table = new JTable(tableModel);
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        UiTheme.styleTable(table);
 
-        detailsArea = new JTextArea();
+        detailsArea = UiTheme.textArea(8);
         detailsArea.setEditable(false);
-        detailsArea.setLineWrap(true);
-        detailsArea.setWrapStyleWord(true);
+        detailsArea.setForeground(UiTheme.TEXT);
+        detailsArea.setBackground(UiTheme.CARD);
 
         JSplitPane splitPane = new JSplitPane(
                 JSplitPane.VERTICAL_SPLIT,
-                new JScrollPane(table),
-                new JScrollPane(detailsArea)
+                UiTheme.scroll(table),
+                UiTheme.scroll(detailsArea)
         );
-        splitPane.setDividerLocation(280);
 
-        add(topPanel, BorderLayout.NORTH);
-        add(splitPane, BorderLayout.CENTER);
+        splitPane.setDividerLocation(430);
+        splitPane.setBorder(BorderFactory.createEmptyBorder());
+        splitPane.setResizeWeight(0.72);
+
+        center.add(splitPane, BorderLayout.CENTER);
+
+        add(center, BorderLayout.CENTER);
 
         searchButton.addActionListener(e -> loadInstitutions());
         refreshButton.addActionListener(e -> refreshData());
@@ -86,6 +115,7 @@ public class InstitutionPanel extends JPanel {
         categoryCombo.addItem("Усі");
 
         Set<String> categories = new LinkedHashSet<>();
+
         for (Institution institution : store.getInstitutions()) {
             categories.add(institution.getCategory());
         }
@@ -124,20 +154,27 @@ public class InstitutionPanel extends JPanel {
             }
         }
 
-        detailsArea.setText("");
+        detailsArea.setText("Оберіть установу в таблиці, щоб переглянути детальну інформацію.");
     }
 
     private void showSelectedInstitution() {
         int row = table.getSelectedRow();
-        if (row == -1) return;
+
+        if (row == -1) {
+            return;
+        }
 
         int id = Integer.parseInt(tableModel.getValueAt(row, 0).toString());
         Institution institution = store.findInstitutionById(id);
-        if (institution == null) return;
+
+        if (institution == null) {
+            return;
+        }
 
         List<GovService> services = store.getServicesByInstitutionId(id);
 
         StringBuilder sb = new StringBuilder();
+
         sb.append("Назва: ").append(institution.getName()).append("\n");
         sb.append("Категорія: ").append(institution.getCategory()).append("\n");
         sb.append("Адреса: ").append(institution.getAddress()).append("\n");
@@ -145,15 +182,20 @@ public class InstitutionPanel extends JPanel {
         sb.append("Email: ").append(institution.getEmail()).append("\n");
         sb.append("Сайт: ").append(institution.getWebsite()).append("\n");
         sb.append("Графік роботи: ").append(institution.getWorkingHours()).append("\n\n");
+
         sb.append("Опис:\n").append(institution.getDescription()).append("\n\n");
+
         sb.append("Послуги:\n");
 
         if (services.isEmpty()) {
             sb.append("Немає послуг.\n");
         } else {
             for (GovService service : services) {
-                sb.append("• ").append(service.getName())
-                        .append(" (").append(service.getExecutionTime()).append(")\n");
+                sb.append("• ")
+                        .append(service.getName())
+                        .append(" — ")
+                        .append(service.getExecutionTime())
+                        .append("\n");
             }
         }
 

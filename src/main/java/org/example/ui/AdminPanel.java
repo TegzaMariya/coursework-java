@@ -10,6 +10,7 @@ import java.awt.*;
 import java.util.List;
 
 public class AdminPanel extends JPanel {
+
     private final MainFrame mainFrame;
     private final DataStore store;
 
@@ -17,48 +18,100 @@ public class AdminPanel extends JPanel {
         this.mainFrame = mainFrame;
         this.store = DataStore.getInstance();
 
-        setLayout(new BorderLayout(10, 10));
+        setLayout(new BorderLayout(25, 25));
+        setBackground(UiTheme.BG);
+        setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
 
-        JLabel title = new JLabel("Панель адміністратора", SwingConstants.CENTER);
-        title.setFont(new Font("Arial", Font.BOLD, 22));
+        JPanel headerWrapper = new JPanel(new BorderLayout());
+        headerWrapper.setOpaque(false);
 
-        JPanel buttonPanel = new JPanel(new GridLayout(3, 2, 10, 10));
-        buttonPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        JButton backButton = UiTheme.secondaryButton("← Назад");
+        backButton.setPreferredSize(new Dimension(135, 42));
 
-        JButton addInstitutionButton = new JButton("Додати установу");
-        JButton editInstitutionButton = new JButton("Редагувати установу");
-        JButton deleteInstitutionButton = new JButton("Видалити установу");
-        JButton addServiceButton = new JButton("Додати послугу");
-        JButton editServiceButton = new JButton("Редагувати послугу");
-        JButton deleteServiceButton = new JButton("Видалити послугу");
+        backButton.addActionListener(e -> {
+            mainFrame.dispose();
 
-        buttonPanel.add(addInstitutionButton);
-        buttonPanel.add(editInstitutionButton);
-        buttonPanel.add(deleteInstitutionButton);
-        buttonPanel.add(addServiceButton);
-        buttonPanel.add(editServiceButton);
-        buttonPanel.add(deleteServiceButton);
+            MainFrame newFrame = new MainFrame();
+            newFrame.setVisible(true);
+        });
 
-        add(title, BorderLayout.NORTH);
-        add(buttonPanel, BorderLayout.CENTER);
+        JPanel header = new JPanel(new GridLayout(2, 1));
+        header.setOpaque(false);
 
-        addInstitutionButton.addActionListener(e -> addInstitution());
-        editInstitutionButton.addActionListener(e -> editInstitution());
-        deleteInstitutionButton.addActionListener(e -> deleteInstitution());
-        addServiceButton.addActionListener(e -> addService());
-        editServiceButton.addActionListener(e -> editService());
-        deleteServiceButton.addActionListener(e -> deleteService());
+        header.add(UiTheme.title("Адмін-панель"));
+        header.add(UiTheme.subtitle("Керування установами та послугами системи"));
+
+        JPanel backPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 10));
+        backPanel.setOpaque(false);
+        backPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 25));
+        backPanel.add(backButton);        backPanel.setOpaque(false);
+        backPanel.add(backButton);
+
+        headerWrapper.add(backPanel, BorderLayout.WEST);
+        headerWrapper.add(header, BorderLayout.CENTER);
+
+        add(headerWrapper, BorderLayout.NORTH);
+
+        JPanel cards = new JPanel(new GridLayout(2, 3, 25, 25));
+        cards.setOpaque(false);
+
+        cards.add(actionCard("Додати установу", "Створення нового запису установи", this::addInstitution));
+        cards.add(actionCard("Редагувати установу", "Оновлення інформації про установу", this::editInstitution));
+        cards.add(actionCard("Видалити установу", "Видалення установи та її послуг", this::deleteInstitution));
+        cards.add(actionCard("Додати послугу", "Створення нової державної послуги", this::addService));
+        cards.add(actionCard("Редагувати послугу", "Оновлення даних про послугу", this::editService));
+        cards.add(actionCard("Видалити послугу", "Видалення послуги із системи", this::deleteService));
+
+        add(cards, BorderLayout.CENTER);
+    }
+
+    private JPanel actionCard(String title, String description, Runnable action) {
+        JPanel card = UiTheme.card();
+        card.setLayout(new BorderLayout(10, 10));
+        card.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        JLabel titleLabel = new JLabel(title);
+        titleLabel.setForeground(UiTheme.TEXT);
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 21));
+
+        JLabel descLabel = new JLabel("<html>" + description + "</html>");
+        descLabel.setForeground(UiTheme.MUTED);
+        descLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+
+        JLabel arrow = new JLabel("→");
+        arrow.setForeground(UiTheme.PRIMARY);
+        arrow.setFont(new Font("Segoe UI", Font.BOLD, 32));
+
+        card.add(titleLabel, BorderLayout.NORTH);
+        card.add(descLabel, BorderLayout.CENTER);
+        card.add(arrow, BorderLayout.SOUTH);
+
+        card.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                action.run();
+            }
+
+            public void mouseEntered(java.awt.event.MouseEvent e) {
+                card.setBackground(UiTheme.CARD_HOVER);
+            }
+
+            public void mouseExited(java.awt.event.MouseEvent e) {
+                card.setBackground(UiTheme.CARD);
+            }
+        });
+
+        return card;
     }
 
     private void addInstitution() {
-        JTextField nameField = new JTextField();
-        JTextField categoryField = new JTextField();
-        JTextField addressField = new JTextField();
-        JTextField phoneField = new JTextField();
-        JTextField emailField = new JTextField();
-        JTextField websiteField = new JTextField();
-        JTextField hoursField = new JTextField();
-        JTextArea descriptionArea = new JTextArea(4, 20);
+        JTextField nameField = UiTheme.textField();
+        JTextField categoryField = UiTheme.textField();
+        JTextField addressField = UiTheme.textField();
+        JTextField phoneField = UiTheme.textField();
+        JTextField emailField = UiTheme.textField();
+        JTextField websiteField = UiTheme.textField();
+        JTextField hoursField = UiTheme.textField();
+        JTextArea descriptionArea = UiTheme.textArea(4);
 
         Object[] message = {
                 "Назва:", nameField,
@@ -71,8 +124,13 @@ public class AdminPanel extends JPanel {
                 "Опис:", new JScrollPane(descriptionArea)
         };
 
-        int result = JOptionPane.showConfirmDialog(this, message, "Додати установу",
-                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        int result = JOptionPane.showConfirmDialog(
+                this,
+                message,
+                "Додати установу",
+                JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.PLAIN_MESSAGE
+        );
 
         if (result == JOptionPane.OK_OPTION) {
             if (Validator.isEmpty(nameField.getText())
@@ -103,6 +161,7 @@ public class AdminPanel extends JPanel {
 
             store.getInstitutions().add(institution);
             store.saveInstitutions();
+
             JOptionPane.showMessageDialog(this, "Установу додано.");
             mainFrame.refreshAllData();
         }
@@ -110,6 +169,7 @@ public class AdminPanel extends JPanel {
 
     private void editInstitution() {
         List<Institution> institutions = store.getInstitutions();
+
         if (institutions.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Список установ порожній.");
             return;
@@ -125,16 +185,27 @@ public class AdminPanel extends JPanel {
                 null
         );
 
-        if (selected == null) return;
+        if (selected == null) {
+            return;
+        }
 
-        JTextField nameField = new JTextField(selected.getName());
-        JTextField categoryField = new JTextField(selected.getCategory());
-        JTextField addressField = new JTextField(selected.getAddress());
-        JTextField phoneField = new JTextField(selected.getPhone());
-        JTextField emailField = new JTextField(selected.getEmail());
-        JTextField websiteField = new JTextField(selected.getWebsite());
-        JTextField hoursField = new JTextField(selected.getWorkingHours());
-        JTextArea descriptionArea = new JTextArea(selected.getDescription(), 4, 20);
+        JTextField nameField = UiTheme.textField();
+        JTextField categoryField = UiTheme.textField();
+        JTextField addressField = UiTheme.textField();
+        JTextField phoneField = UiTheme.textField();
+        JTextField emailField = UiTheme.textField();
+        JTextField websiteField = UiTheme.textField();
+        JTextField hoursField = UiTheme.textField();
+        JTextArea descriptionArea = UiTheme.textArea(4);
+
+        nameField.setText(selected.getName());
+        categoryField.setText(selected.getCategory());
+        addressField.setText(selected.getAddress());
+        phoneField.setText(selected.getPhone());
+        emailField.setText(selected.getEmail());
+        websiteField.setText(selected.getWebsite());
+        hoursField.setText(selected.getWorkingHours());
+        descriptionArea.setText(selected.getDescription());
 
         Object[] message = {
                 "Назва:", nameField,
@@ -147,8 +218,13 @@ public class AdminPanel extends JPanel {
                 "Опис:", new JScrollPane(descriptionArea)
         };
 
-        int result = JOptionPane.showConfirmDialog(this, message, "Редагувати установу",
-                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        int result = JOptionPane.showConfirmDialog(
+                this,
+                message,
+                "Редагувати установу",
+                JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.PLAIN_MESSAGE
+        );
 
         if (result == JOptionPane.OK_OPTION) {
             if (Validator.isEmpty(nameField.getText())
@@ -168,6 +244,7 @@ public class AdminPanel extends JPanel {
             selected.setDescription(descriptionArea.getText().trim());
 
             store.saveInstitutions();
+
             JOptionPane.showMessageDialog(this, "Установу оновлено.");
             mainFrame.refreshAllData();
         }
@@ -175,6 +252,7 @@ public class AdminPanel extends JPanel {
 
     private void deleteInstitution() {
         List<Institution> institutions = store.getInstitutions();
+
         if (institutions.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Список установ порожній.");
             return;
@@ -190,7 +268,9 @@ public class AdminPanel extends JPanel {
                 null
         );
 
-        if (selected == null) return;
+        if (selected == null) {
+            return;
+        }
 
         int confirm = JOptionPane.showConfirmDialog(
                 this,
@@ -201,6 +281,7 @@ public class AdminPanel extends JPanel {
 
         if (confirm == JOptionPane.YES_OPTION) {
             store.deleteInstitution(selected.getId());
+
             JOptionPane.showMessageDialog(this, "Установу видалено.");
             mainFrame.refreshAllData();
         }
@@ -208,18 +289,19 @@ public class AdminPanel extends JPanel {
 
     private void addService() {
         List<Institution> institutions = store.getInstitutions();
+
         if (institutions.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Спочатку додайте хоча б одну установу.");
             return;
         }
 
         JComboBox<Institution> institutionBox = new JComboBox<>(institutions.toArray(new Institution[0]));
-        JTextField nameField = new JTextField();
-        JTextArea descriptionArea = new JTextArea(3, 20);
-        JTextArea docsArea = new JTextArea(3, 20);
-        JTextField timeField = new JTextField();
-        JTextField costField = new JTextField();
-        JTextArea notesArea = new JTextArea(3, 20);
+        JTextField nameField = UiTheme.textField();
+        JTextArea descriptionArea = UiTheme.textArea(3);
+        JTextArea docsArea = UiTheme.textArea(3);
+        JTextField timeField = UiTheme.textField();
+        JTextField costField = UiTheme.textField();
+        JTextArea notesArea = UiTheme.textArea(3);
 
         Object[] message = {
                 "Установа:", institutionBox,
@@ -231,11 +313,17 @@ public class AdminPanel extends JPanel {
                 "Примітки:", new JScrollPane(notesArea)
         };
 
-        int result = JOptionPane.showConfirmDialog(this, message, "Додати послугу",
-                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        int result = JOptionPane.showConfirmDialog(
+                this,
+                message,
+                "Додати послугу",
+                JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.PLAIN_MESSAGE
+        );
 
         if (result == JOptionPane.OK_OPTION) {
             Institution institution = (Institution) institutionBox.getSelectedItem();
+
             if (institution == null || Validator.isEmpty(nameField.getText())) {
                 JOptionPane.showMessageDialog(this, "Назва послуги є обов'язковою.");
                 return;
@@ -254,6 +342,7 @@ public class AdminPanel extends JPanel {
 
             store.getServices().add(service);
             store.saveServices();
+
             JOptionPane.showMessageDialog(this, "Послугу додано.");
             mainFrame.refreshAllData();
         }
@@ -261,6 +350,7 @@ public class AdminPanel extends JPanel {
 
     private void editService() {
         List<GovService> services = store.getServices();
+
         if (services.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Список послуг порожній.");
             return;
@@ -276,9 +366,12 @@ public class AdminPanel extends JPanel {
                 null
         );
 
-        if (selected == null) return;
+        if (selected == null) {
+            return;
+        }
 
         List<Institution> institutions = store.getInstitutions();
+
         JComboBox<Institution> institutionBox = new JComboBox<>(institutions.toArray(new Institution[0]));
 
         for (Institution i : institutions) {
@@ -288,12 +381,19 @@ public class AdminPanel extends JPanel {
             }
         }
 
-        JTextField nameField = new JTextField(selected.getName());
-        JTextArea descriptionArea = new JTextArea(selected.getDescription(), 3, 20);
-        JTextArea docsArea = new JTextArea(selected.getDocumentsRequired(), 3, 20);
-        JTextField timeField = new JTextField(selected.getExecutionTime());
-        JTextField costField = new JTextField(selected.getCost());
-        JTextArea notesArea = new JTextArea(selected.getNotes(), 3, 20);
+        JTextField nameField = UiTheme.textField();
+        JTextArea descriptionArea = UiTheme.textArea(3);
+        JTextArea docsArea = UiTheme.textArea(3);
+        JTextField timeField = UiTheme.textField();
+        JTextField costField = UiTheme.textField();
+        JTextArea notesArea = UiTheme.textArea(3);
+
+        nameField.setText(selected.getName());
+        descriptionArea.setText(selected.getDescription());
+        docsArea.setText(selected.getDocumentsRequired());
+        timeField.setText(selected.getExecutionTime());
+        costField.setText(selected.getCost());
+        notesArea.setText(selected.getNotes());
 
         Object[] message = {
                 "Установа:", institutionBox,
@@ -305,11 +405,17 @@ public class AdminPanel extends JPanel {
                 "Примітки:", new JScrollPane(notesArea)
         };
 
-        int result = JOptionPane.showConfirmDialog(this, message, "Редагувати послугу",
-                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        int result = JOptionPane.showConfirmDialog(
+                this,
+                message,
+                "Редагувати послугу",
+                JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.PLAIN_MESSAGE
+        );
 
         if (result == JOptionPane.OK_OPTION) {
             Institution institution = (Institution) institutionBox.getSelectedItem();
+
             if (institution == null || Validator.isEmpty(nameField.getText())) {
                 JOptionPane.showMessageDialog(this, "Назва послуги є обов'язковою.");
                 return;
@@ -324,6 +430,7 @@ public class AdminPanel extends JPanel {
             selected.setNotes(notesArea.getText().trim());
 
             store.saveServices();
+
             JOptionPane.showMessageDialog(this, "Послугу оновлено.");
             mainFrame.refreshAllData();
         }
@@ -331,6 +438,7 @@ public class AdminPanel extends JPanel {
 
     private void deleteService() {
         List<GovService> services = store.getServices();
+
         if (services.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Список послуг порожній.");
             return;
@@ -346,7 +454,9 @@ public class AdminPanel extends JPanel {
                 null
         );
 
-        if (selected == null) return;
+        if (selected == null) {
+            return;
+        }
 
         int confirm = JOptionPane.showConfirmDialog(
                 this,
@@ -357,6 +467,7 @@ public class AdminPanel extends JPanel {
 
         if (confirm == JOptionPane.YES_OPTION) {
             store.deleteService(selected.getId());
+
             JOptionPane.showMessageDialog(this, "Послугу видалено.");
             mainFrame.refreshAllData();
         }
